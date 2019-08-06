@@ -20,12 +20,12 @@
 // - remove margin(0.005) of manual plan
 // - fix moveAbsolute2 bug on linux                                       check
 // - generate 6-axis from DH                                              check
-// - make dynamic calibration as a plan                                   
-// - use extern template to reduce compile time
+// - make dynamic calibration as a plan                                   guikai
+// - use extern template to reduce compile time                           
 
 // to do list 2019-05-07:
 // - svd decomposition
-// - check ethercat link
+// - check ethercat link                                                  check
 // - scan slave info to motion                                            check
 // - generate ur from DH
 // - 7-axis inverse solver                                                check
@@ -36,21 +36,31 @@
 // - check scan result when controller start                              check
 
 // to do list 2019-05-14:
-// - make pdo of curent/targetpos/... can be customized
+// - make pdo of curent/targetpos/... can be customized                   use toq instead of cur
 // - fix server stastic data bug: when lose some frame, it corrupt 
 // - check motion respectively                                            check
 // - make startWebSock and runCmdLine available                           check
-// - make callbacks before and after plans
+// - make callbacks before and after plans                                testing
 // - object insert & remove child node
 // - make pdo init value to zero                                          check
 
 // to do list 2019-06-03:
 // - make xml support chinese                                             check
-// - check if xenomai can be started from sub-thread
-// - scan from esi file
+// - check if xenomai can be started from sub-thread                      use runCmdLine to work
+// - scan from esi file                                                   check
 // - make virtual axis
 // - add tool coordinate easy
 
 // to do list 2019-06-17:
-// - make SubRefPool
-// - make ChildRefPool
+// - make SubRefPool                                                      check
+// - make ChildRefPool                                                    check
+
+// to do list 2019-06-24:
+// - check of require ENABLE MODE8\9\10
+// - config sdo
+// 
+// to do list 2019-07-24
+// - make interface of server                                             
+// - check pdo instead of corrupt                                         
+// - make motionPool() available before start controller
+// - make new parsing system, which parse if/else/while ...

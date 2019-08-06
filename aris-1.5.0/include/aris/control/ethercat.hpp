@@ -1,6 +1,8 @@
 ﻿#ifndef ARIS_CONTROL_ETHERCAT_H_
 #define ARIS_CONTROL_ETHERCAT_H_
 
+#include <filesystem>
+
 #include <aris/control/controller_motion.hpp>
 
 namespace aris::control
@@ -99,7 +101,10 @@ namespace aris::control
 		virtual ~EthercatSlave();
 		explicit EthercatSlave(const std::string &name = "ethercat_slave", std::uint16_t phy_id = 0, std::uint32_t vendor_id = 0x00000000, std::uint32_t product_code = 0x00000000, std::uint32_t revision_num = 0x00000000, std::uint32_t dc_assign_activate = 0x00000000);
 		ARIS_REGISTER_TYPE(EthercatSlave);
-		ARIS_DECLARE_BIG_FOUR(EthercatSlave);
+		EthercatSlave(const EthercatSlave &other);
+		EthercatSlave(EthercatSlave &&other) = delete;
+		EthercatSlave& operator=(const EthercatSlave &other);
+		EthercatSlave& operator=(EthercatSlave &&other) = delete;
 
 	private:
 		struct Imp;
@@ -110,6 +115,38 @@ namespace aris::control
 	class EthercatMaster : virtual public Master
 	{
 	public:
+		typedef struct {
+			unsigned int online : 1; /**< The slave is online. */
+			unsigned int operational : 1; /**< The slave was brought into \a OP state
+										  using the specified configuration. */
+			unsigned int al_state : 4; /**< The application-layer state of the slave.
+									   - 1: \a INIT
+									   - 2: \a PREOP
+									   - 4: \a SAFEOP
+									   - 8: \a OP
+
+									   Note that each state is coded in a different
+									   bit! */
+		} SlaveLinkState;
+		typedef struct {
+			unsigned int slaves_responding; /**< Sum of responding slaves on the given
+											link. */
+			unsigned int al_states : 4; /**< Application-layer states of the slaves on
+										the given link.  The states are coded in the
+										lower 4 bits.  If a bit is set, it means
+										that at least one slave in the bus is in the
+										corresponding state:
+										- Bit 0: \a INIT
+										- Bit 1: \a PREOP
+										- Bit 2: \a SAFEOP
+										- Bit 3: \a OP */
+			unsigned int link_up : 1; /**< \a true, if the given Ethernet link is up.
+									  */
+		} MasterLinkState;
+
+		auto virtual saveXml(aris::core::XmlElement &xml_ele) const->void override;
+		auto virtual loadXml(const aris::core::XmlElement &xml_ele)->void override;
+
 		auto slavePool()->aris::core::ChildRefPool<EthercatSlave, aris::core::ObjectPool<Slave>>&;
 		auto slavePool()const->const aris::core::ChildRefPool<EthercatSlave, aris::core::ObjectPool<Slave>>& { return const_cast<std::decay_t<decltype(*this)>*>(this)->slavePool(); }
 		auto slaveAtAbs(aris::Size id)->EthercatSlave& { return dynamic_cast<EthercatSlave&>(Master::slaveAtAbs(id)); }
@@ -117,11 +154,18 @@ namespace aris::control
 		auto slaveAtPhy(aris::Size id)->EthercatSlave& { return dynamic_cast<EthercatSlave&>(Master::slaveAtPhy(id)); }
 		auto slaveAtPhy(aris::Size id)const->const EthercatSlave& { return const_cast<std::decay_t<decltype(*this)> *>(this)->slaveAtPhy(id); }
 		
+		auto getLinkState(MasterLinkState *master_state, SlaveLinkState *slave_state)->void; // only for rt
+
 		auto ecHandle()->std::any&;
 		auto ecHandle()const->const std::any& { return const_cast<std::decay_t<decltype(*this)> *>(this)->ecHandle(); }
 		auto scan()->void;
 		auto scanInfoForCurrentSlaves()->void;
 		auto scanPdoForCurrentSlaves()->void;
+
+		auto setEsiDirs(std::vector<std::filesystem::path> esi_dirs)->void;
+		auto updateDeviceList()->void;
+		auto getDeviceList()->std::string;
+		auto getPdoList(int vendor_id, int product_code, int revision_num)->std::string;
 
 		virtual ~EthercatMaster();
 		EthercatMaster(const std::string &name = "ethercat_master");
@@ -155,7 +199,7 @@ namespace aris::control
 		auto virtual modeOfOperation()const->std::uint8_t override;
 		auto virtual targetPos()const->double override;
 		auto virtual targetVel()const->double override;
-		auto virtual targetCur()const->double override;
+		auto virtual targetToq()const->double override;
 		auto virtual offsetVel()const->double override;
 		auto virtual offsetCur()const->double override;
 		// require pdo 0x6040 //
@@ -167,11 +211,11 @@ namespace aris::control
 		// require pdo 0x60FF //
 		auto virtual setTargetVel(double vel)->void override;
 		// require pdo 0x6071 //
-		auto virtual setTargetCur(double cur)->void override;
-		// require pdo 0x6071 //
+		auto virtual setTargetToq(double toq)->void override;
+		// require pdo 0x60B1 //
 		auto virtual setOffsetVel(double vel)->void override;
-		// require pdo 0x6071 //
-		auto virtual setOffsetCur(double cur)->void override;
+		// require pdo 0x60B2 //
+		auto virtual setOffsetToq(double toq)->void override;
 		// require pdo 0x6041 //
 		auto virtual statusWord()->std::uint16_t override;
 		// require pdo 0x6061 //
@@ -180,10 +224,10 @@ namespace aris::control
 		auto virtual actualPos()->double override;
 		// require pdo 0x606C //
 		auto virtual actualVel()->double override;
+		// require pdo 0x6077 //
+		auto virtual actualToq()->double override;
 		// require pdo 0x6078 //
 		auto virtual actualCur()->double override;
-		// require pdo 0x6077 //
-		auto virtual actualTor()->double override;
 
 		// require pdo 0x6040 0x6041 // 
 		auto virtual disable()->int override;
@@ -226,6 +270,9 @@ namespace aris::control
 		auto slaveAtAbs(aris::Size id)const->const EthercatSlave& { return const_cast<std::decay_t<decltype(*this)> *>(this)->slaveAtAbs(id); }
 		auto slaveAtPhy(aris::Size id)->EthercatSlave& { return EthercatMaster::slaveAtPhy(id); }
 		auto slaveAtPhy(aris::Size id)const->const EthercatSlave& { return const_cast<std::decay_t<decltype(*this)> *>(this)->slaveAtPhy(id); }
+
+		auto virtual saveXml(aris::core::XmlElement &xml_ele) const->void override { EthercatMaster::saveXml(xml_ele); }
+		auto virtual loadXml(const aris::core::XmlElement &xml_ele)->void override { EthercatMaster::loadXml(xml_ele); }
 
 		virtual ~EthercatController();
 		EthercatController(const std::string &name = "ethercat_controller");
