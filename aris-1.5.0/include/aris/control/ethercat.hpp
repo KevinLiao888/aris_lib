@@ -74,6 +74,7 @@ namespace aris::control
 		auto smPool()const->const aris::core::ObjectPool<SyncManager>& { return const_cast<std::decay_t<decltype(*this)>*>(this)->smPool(); }
 		auto ecHandle()->std::any&;
 		auto ecHandle()const->const std::any& { return const_cast<std::decay_t<decltype(*this)>*>(this)->ecHandle(); }
+		
 		auto vendorID()const->std::uint32_t;
 		auto setVendorID(std::uint32_t vendor_id)->void;
 		auto productCode()const->std::uint32_t;
@@ -82,12 +83,14 @@ namespace aris::control
 		auto setRevisionNum(std::uint32_t revision_num)->void;
 		auto dcAssignActivate()const->std::uint32_t;
 		auto setDcAssignActivate(std::uint32_t dc_assign_activate)->void;
+		auto sync0ShiftNs()const->std::int32_t;
+		auto setSync0ShiftNs(std::int32_t sync0_shift_ns)->void;
 		auto scanInfoForCurrentSlave()->void;
 		auto scanPdoForCurrentSlave()->void;
 
 		template<typename ValueType>
-		auto readPdo(std::uint16_t index, std::uint8_t subindex, ValueType &value)->void { readPdo(index, subindex, &value, sizeof(ValueType) * 8); }
-		auto readPdo(std::uint16_t index, std::uint8_t subindex, void *value, aris::Size bit_size)->void;
+		auto readPdo(std::uint16_t index, std::uint8_t subindex, ValueType &value)const->void { readPdo(index, subindex, &value, sizeof(ValueType) * 8); }
+		auto readPdo(std::uint16_t index, std::uint8_t subindex, void *value, aris::Size bit_size)const->void;
 		template<typename ValueType>
 		auto writePdo(std::uint16_t index, std::uint8_t subindex, const ValueType &value)->void { writePdo(index, subindex, &value, sizeof(ValueType) * 8); }
 		auto writePdo(std::uint16_t index, std::uint8_t subindex, const void *value, aris::Size bit_size)->void;
@@ -99,7 +102,7 @@ namespace aris::control
 		auto writeSdo(std::uint16_t index, std::uint8_t subindex, const void *value, aris::Size byte_size)->void;
 
 		virtual ~EthercatSlave();
-		explicit EthercatSlave(const std::string &name = "ethercat_slave", std::uint16_t phy_id = 0, std::uint32_t vendor_id = 0x00000000, std::uint32_t product_code = 0x00000000, std::uint32_t revision_num = 0x00000000, std::uint32_t dc_assign_activate = 0x00000000);
+		explicit EthercatSlave(const std::string &name = "ethercat_slave", std::uint16_t phy_id = 0, std::uint32_t vendor_id = 0, std::uint32_t product_code = 0, std::uint32_t revision_num = 0, std::uint32_t dc_assign_activate = 0, std::int32_t sync0_shift_ns = 650'000);
 		ARIS_REGISTER_TYPE(EthercatSlave);
 		EthercatSlave(const EthercatSlave &other);
 		EthercatSlave(EthercatSlave &&other) = delete;
@@ -179,7 +182,6 @@ namespace aris::control
 		auto virtual init()->void override;
 		auto virtual send()->void override;
 		auto virtual recv()->void override;
-		auto virtual sync()->void override;
 		auto virtual release()->void override;
 
 	private:
@@ -217,17 +219,17 @@ namespace aris::control
 		// require pdo 0x60B2 //
 		auto virtual setOffsetToq(double toq)->void override;
 		// require pdo 0x6041 //
-		auto virtual statusWord()->std::uint16_t override;
+		auto virtual statusWord()const->std::uint16_t override;
 		// require pdo 0x6061 //
-		auto virtual modeOfDisplay()->std::uint8_t override;
+		auto virtual modeOfDisplay()const->std::uint8_t override;
 		// require pdo 0x6064 //
-		auto virtual actualPos()->double override;
+		auto virtual actualPos()const->double override;
 		// require pdo 0x606C //
-		auto virtual actualVel()->double override;
+		auto virtual actualVel()const->double override;
 		// require pdo 0x6077 //
-		auto virtual actualToq()->double override;
+		auto virtual actualToq()const->double override;
 		// require pdo 0x6078 //
-		auto virtual actualCur()->double override;
+		auto virtual actualCur()const->double override;
 
 		// require pdo 0x6040 0x6041 // 
 		auto virtual disable()->int override;
@@ -286,7 +288,6 @@ namespace aris::control
 		auto virtual init()->void override;
 		auto virtual send()->void override { EthercatMaster::send(); }
 		auto virtual recv()->void override { EthercatMaster::recv(); }
-		auto virtual sync()->void override { EthercatMaster::sync(); }
 		auto virtual release()->void override { EthercatMaster::release(); }
 
 		struct Imp;

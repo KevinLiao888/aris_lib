@@ -59,6 +59,7 @@ namespace aris::server
 		auto globalCount()->std::int64_t;
 
 		// operation in RT context //
+		auto currentExecuteTargetRt()->aris::plan::PlanTarget *;
 
 		// operation in NRT context //
 		auto open()->void;
@@ -70,9 +71,9 @@ namespace aris::server
 		auto stop()->void;
 		auto waitForAllExecution()->void;
 		auto waitForAllCollection()->void;
-		auto currentExecuteId()->std::int64_t;
-		auto currentCollectId()->std::int64_t;
-		auto getRtData(const std::function<void(ControlServer&, std::any&)>& get_func, std::any& data)->void;
+		auto currentExecuteTarget()->std::shared_ptr<aris::plan::PlanTarget>;
+		auto currentCollectTarget()->std::shared_ptr<aris::plan::PlanTarget>;
+		auto getRtData(const std::function<void(ControlServer&, const aris::plan::PlanTarget *target, std::any&)>& get_func, std::any& data)->void;
 
 		ARIS_REGISTER_TYPE(ControlServer);
 

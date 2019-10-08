@@ -31,11 +31,31 @@ namespace aris::plan
 		enum
 		{
 			SUCCESS = 0,
-			ERROR = 1,
-			CANCELLED = 2
+			PREPARE_EXCEPTION = -1,
+			COLLECT_EXCEPTION = -2,
+			PARSE_EXCEPTION = -3,
+			PLAN_CANCELLED = -4,
+			SLAVE_AT_INIT = -101,
+			SLAVE_AT_SAFEOP = -102,
+			SLAVE_AT_PREOP = -103,
+			SLAVE_AT_OP = -104,
+			MOTION_NOT_ENABLED = -501,
+			MOTION_POS_BEYOND_MIN = -502,
+			MOTION_POS_BEYOND_MAX = -503,
+			MOTION_POS_NOT_CONTINUOUS = -504,
+			MOTION_POS_NOT_CONTINUOUS_SECOND_ORDER = -505,
+			MOTION_POS_FOLLOWING_ERROR = -506,
+			MOTION_VEL_BEYOND_MIN = -507,
+			MOTION_VEL_BEYOND_MAX = -508,
+			MOTION_VEL_NOT_CONTINUOUS = -509,
+			MOTION_VEL_FOLLOWING_ERROR = -510,
+			MOTION_INVALID_MODE = -511,
+
+			PLAN_OVER_TIME = -1001,
+			INVERSE_KINEMATIC_POSITION_FAILED = -1002,
 		};
 		
-		Plan* plan;                                       // prepair/execute/collect  get&set(but be careful when prepair)
+		std::unique_ptr<aris::plan::Plan> plan;           // prepair/execute/collect  get&set(but be careful when prepair)
 		aris::server::ControlServer* server;              // prepair/execute/collect  get&set(but be careful when prepair)
 		aris::dynamic::Model* model;                      // prepair/execute/collect  get&set(but be careful when prepair)
 		aris::control::Controller* controller;            // prepair/execute/collect  get&set(but be careful when prepair)
@@ -43,12 +63,13 @@ namespace aris::plan
 		std::uint64_t option;                             // prepair/execute/collect  get&set when prepair, get when execute and collect
 		std::vector<std::uint64_t> mot_options;           // prepair/execute/collect  set when prepair, get when execute, destroy when collect
 		std::any param;                                   // prepair/execute/collect  set when prepair, get when execute, destroy when collect
-		std::int32_t count;                               //         execute/collect  get
+		std::int64_t count;                               //         execute/collect  get
 		std::int64_t begin_global_count;                  //         execute/collect  get
 		aris::control::Master::RtStasticsData rt_stastic; //                /collect  get
 		std::any ret;
 		std::int32_t ret_code;
 		std::future<void> finished;
+		char ret_msg[1024];
 	};
 	class Plan :public aris::core::Object
 	{
@@ -550,17 +571,6 @@ namespace aris::plan
 		aris::core::ImpPtr<Imp> imp_;
 	};
 
-
-	class GetPartPq :public Plan
-	{
-	public:
-		auto virtual prepairNrt(const std::map<std::string, std::string> &params, PlanTarget &target)->void override;
-
-		virtual ~GetPartPq();
-		explicit GetPartPq(const std::string &name = "get_part_pq");
-		ARIS_REGISTER_TYPE(GetPartPq);
-		ARIS_DEFINE_BIG_FOUR(GetPartPq);
-	};
 	class GetXml :public Plan
 	{
 	public:
@@ -637,7 +647,6 @@ namespace aris::plan
 		aris::core::ImpPtr<Imp> imp_;
 	};
 
-
 	class MoveSeries :public Plan
 	{
 	public:
@@ -649,10 +658,6 @@ namespace aris::plan
 		ARIS_REGISTER_TYPE(MoveSeries);
 		ARIS_DEFINE_BIG_FOUR(MoveSeries);
 	};
-
-
-
-
 }
 
 #endif
