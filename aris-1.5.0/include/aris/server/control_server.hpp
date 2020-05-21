@@ -13,7 +13,6 @@
 #include <aris/dynamic/dynamic.hpp>
 #include <aris/plan/plan.hpp>
 
-#include "aris/server/ui.hpp"
 #include "aris/server/interface.hpp"
 
 namespace aris::server
@@ -57,23 +56,27 @@ namespace aris::server
 		auto setRtPlanPostCallback(PostCallback post_callback)->void;
 		auto running()->bool;
 		auto globalCount()->std::int64_t;
-
-		// operation in RT context //
-		auto currentExecuteTargetRt()->aris::plan::PlanTarget *;
+		auto currentExecutePlanRt()->aris::plan::Plan *;
 
 		// operation in NRT context //
 		auto open()->void;
 		auto close()->void;
 		auto runCmdLine()->void;
-		auto executeCmd(const aris::core::Msg &cmd_string, std::function<void(aris::plan::PlanTarget&)> post_callback = nullptr)->std::shared_ptr<aris::plan::PlanTarget>;
-		auto executeCmdInCmdLine(const aris::core::Msg &cmd_string, std::function<void(aris::plan::PlanTarget&)> post_callback = nullptr)->std::shared_ptr<aris::plan::PlanTarget>;
+		auto executeCmd(std::vector<std::pair<std::string_view, std::function<void(aris::plan::Plan&)>>>)->std::vector<std::shared_ptr<aris::plan::Plan>>;
+		auto executeCmd(std::string_view cmd_str, std::function<void(aris::plan::Plan&)> post_callback = nullptr)->std::shared_ptr<aris::plan::Plan>;
+		auto executeCmdInCmdLine(std::vector<std::pair<std::string_view, std::function<void(aris::plan::Plan&)>>>)->std::vector<std::shared_ptr<aris::plan::Plan>>;
+		auto executeCmdInCmdLine(std::string_view cmd_string, std::function<void(aris::plan::Plan&)> post_callback = nullptr)->std::shared_ptr<aris::plan::Plan>;
+		auto init()->void;
 		auto start()->void;
 		auto stop()->void;
+		auto currentExecutePlan()->std::shared_ptr<aris::plan::Plan>;
+		auto currentCollectPlan()->std::shared_ptr<aris::plan::Plan>;
 		auto waitForAllExecution()->void;
 		auto waitForAllCollection()->void;
-		auto currentExecuteTarget()->std::shared_ptr<aris::plan::PlanTarget>;
-		auto currentCollectTarget()->std::shared_ptr<aris::plan::PlanTarget>;
-		auto getRtData(const std::function<void(ControlServer&, const aris::plan::PlanTarget *target, std::any&)>& get_func, std::any& data)->void;
+		auto getRtData(const std::function<void(ControlServer&, const aris::plan::Plan *target, std::any&)>& get_func, std::any& data)->void;
+		auto errorCode()const->int;
+		auto errorMsg()const->const char *;
+		auto clearError()->void;
 
 		ARIS_REGISTER_TYPE(ControlServer);
 

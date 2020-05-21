@@ -18,7 +18,7 @@ list(APPEND _IMPORT_CHECK_FILES_FOR_aris::aris_robot "${_IMPORT_PREFIX}/lib/rele
 # Import target "aris::aris_server" for configuration "Release"
 set_property(TARGET aris::aris_server APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(aris::aris_server PROPERTIES
-  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
+  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C;CXX"
   IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/release/libaris_server.a"
   )
 
